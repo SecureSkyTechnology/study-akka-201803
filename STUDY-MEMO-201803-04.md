@@ -242,3 +242,16 @@ Scala Future 参考：
 - Circuit Breaker : Futureや分散環境を意識した高度なトピックスになるため、後日調査としておく。
   - https://doc.akka.io/docs/akka/2.5/common/circuitbreaker.html
 
+## 参考書籍
+
+- "Akka in Action", Raymond Roestenburg, Rob Bakker, and Rob Williams (Manning Publications)
+  - https://www.manning.com/books/akka-in-action
+  - https://github.com/RayRoestenburg/akka-in-action (サンプルコード)
+- "Akka 実践バイブル", Raymond Roestenburg, Rob Bakker, Rob Williams, 訳 : 前出祐吾, 根来和輝, 釘屋二郎, 監訳 : TIS株式会社 (翔泳社)
+  - https://www.shoeisha.co.jp/book/detail/9784798153278
+  - "Akka in Action" の日本語訳
+- 参考レビュー
+  - http://takezoe.hatenablog.com/entry/20121209/p1
+  - http://takezoe.hatenablog.com/entry/2017/12/12/124924
+
+
