@@ -101,6 +101,13 @@ see : https://github.com/lightbend/config/issues/188
 - stashというのもできる
   - https://doc.akka.io/docs/akka/2.5/actors.html#stash
 
+stop した Actor はメモリ上からGCなどで削除される？
+- Always stop unused Akka actors – mikulskibartosz
+  - https://mikulskibartosz.name/always-stop-unused-akka-actors-a2ceeb1ed41
+- 削除される。実際に `ActorMemoryLeakDemo` と `ActorMemoryLeakSolutionDemo` で上記記事のソースをJavaに書き直して、`OutOfMemoryError` の発生とその解消を確認できる。
+  - `ActorMemoryLeakDemo` による[メモリリーク発生時の画像](./images/actor-memory-leak-demo.png)
+  - `ActorMemoryLeakSolutionDemo` でstopされたActorがGCにより回収され、[動作を継続できている様子](./images/actor-memory-leak-solution-demo.png)
+
 ## Scheduler(tick-tack)
 
 - https://doc.akka.io/docs/akka/2.5/scheduler.html
