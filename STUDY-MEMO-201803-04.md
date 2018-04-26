@@ -123,6 +123,8 @@ stop した Actor はメモリ上からGCなどで削除される？
   - 通常例外についてはActorをrestart.
   - `ActorInitializationException`, `ActorKilledException`, `DeathPactException` (=Akka特有のabend系例外) についてはActorをstop.
   - https://doc.akka.io/docs/akka/2.5/fault-tolerance.html#default-supervisor-strategy
+- `getContext().stop()` などで通常の流れで stop した Actor は、 supervisor からは restart されない。
+  - 基本的に例外発生でのrestartとなり、例外無しにstopしたものについてはstopしたままとなる。
 
 ## ディスパッチャーとスレッド/アクターの配置
 
