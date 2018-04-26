@@ -3,6 +3,8 @@ package akkastudy201803;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
+import akkastudy201803.demo.ActorMemoryLeakDemo;
+import akkastudy201803.demo.ActorMemoryLeakSolutionDemo;
 import akkastudy201803.demo.ActorReceiveTimeoutDemo;
 import akkastudy201803.demo.ActorStashDemo;
 import akkastudy201803.demo.AkkaQuartzSchedulerDemo;
@@ -42,6 +44,8 @@ public class Main {
         new RoundRobinGroupDemo(),
         new FSMAutoStateTimeoutDemo(),
         new FSMTimerDemo(),
+        new ActorMemoryLeakDemo(),
+        new ActorMemoryLeakSolutionDemo(),
         // @formatter:on
         };
 
