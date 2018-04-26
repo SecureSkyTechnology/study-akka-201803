@@ -92,6 +92,8 @@ public class SupervisorDemoAllForOneTest {
                 getSender().tell(lastDiv, getSelf());
             }).match(Exception.class, exception -> {
                 throw exception;
+            }).matchEquals("done", m -> {
+                getContext().stop(getSelf());
             }).matchAny(m -> {
                 getSender().tell(lastDiv, getSelf());
             }).build();
@@ -207,6 +209,44 @@ public class SupervisorDemoAllForOneTest {
 
         div2.tell(new Identify(2), probe.getRef());
         id = probe.expectMsgClass(ActorIdentity.class);
+        assertFalse(id.getActorRef().isPresent());
+    }
+
+    @Test
+    public void testNormalyStoppedActorDoesNotRestart() throws Exception {
+        TestKit probe = new TestKit(system);
+        ActorRef supervisor =
+            system.actorOf(
+                Props.create(AllForOneSuperVisorDemo.class),
+                "all-for-one-supervisor-normal-stopped-actor-does-not-restart-demo");
+
+        supervisor.tell("div1", probe.getRef());
+        ActorRef div1 = probe.expectMsgClass(ActorRef.class);
+        div1.tell(new DivPair(6, 3), probe.getRef());
+        probe.expectMsg(2);
+        div1.tell(new Object(), probe.getRef());
+        probe.expectMsg(2);
+
+        supervisor.tell("div2", probe.getRef());
+        ActorRef div2 = probe.expectMsgClass(ActorRef.class);
+        div2.tell(new DivPair(10, 2), probe.getRef());
+        probe.expectMsg(5);
+        div2.tell(new Object(), probe.getRef());
+        probe.expectMsg(5);
+
+        // normal stop : terminate actor by actor itself
+        probe.watch(div1);
+        div1.tell("done", ActorRef.noSender());
+        probe.expectMsgClass(Terminated.class);
+        probe.unwatch(div1);
+
+        // all-for-one strategy : div1 stopped, but div2 not affected. 
+        div2.tell(new Object(), probe.getRef());
+        probe.expectMsg(5);
+
+        // div1 does not restart.
+        div1.tell(new Identify(1), probe.getRef());
+        ActorIdentity id = probe.expectMsgClass(ActorIdentity.class);
         assertFalse(id.getActorRef().isPresent());
     }
 

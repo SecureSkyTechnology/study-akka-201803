@@ -141,9 +141,14 @@ public class SupervisorDemoOneForOneTest {
 
         @Override
         public Receive createReceive() {
-            return receiveBuilder().match(Exception.class, exception -> {
-                throw exception;
-            }).match(Integer.class, i -> state = i).matchEquals("get", s -> getSender().tell(state, getSelf())).build();
+            return receiveBuilder()
+                .match(Exception.class, exception -> {
+                    throw exception;
+                })
+                .match(Integer.class, i -> state = i)
+                .matchEquals("get", s -> getSender().tell(state, getSelf()))
+                .matchEquals("done", m -> getContext().stop(getSelf()))
+                .build();
         }
     }
 
@@ -186,6 +191,45 @@ public class SupervisorDemoOneForOneTest {
         child.tell(new Identify(1), probe.getRef());
         ActorIdentity id = probe.expectMsgClass(ActorIdentity.class);
         assertFalse(id.getActorRef().isPresent());
+    }
+
+    @Test
+    public void testNormalyStoppedActorDoesNotRestart() throws Exception {
+        ActorRef supervisor =
+            system.actorOf(
+                Props.create(OneForOneSuperVisorDemo.class),
+                "one-for-one-supervisor-normal-stopped-actor-does-not-restart-demo");
+
+        TestKit probe1 = new TestKit(system);
+        supervisor.tell(Props.create(Child.class), probe1.getRef());
+        ActorRef child1 = probe1.expectMsgClass(ActorRef.class);
+
+        TestKit probe2 = new TestKit(system);
+        supervisor.tell(Props.create(Child.class), probe2.getRef());
+        ActorRef child2 = probe2.expectMsgClass(ActorRef.class);
+
+        child1.tell(42, ActorRef.noSender());
+        child1.tell("get", probe1.getRef());
+        probe1.expectMsg(42);
+        child2.tell(12, ActorRef.noSender());
+        child2.tell("get", probe2.getRef());
+        probe2.expectMsg(12);
+
+        // normal stop : terminate actor by actor itself
+        probe1.watch(child1);
+        child1.tell("done", ActorRef.noSender());
+        probe1.expectMsgClass(Terminated.class);
+        probe1.unwatch(child1);
+
+        // child1 does not restart.
+        child1.tell(new Identify(1), probe1.getRef());
+        ActorIdentity id = probe1.expectMsgClass(ActorIdentity.class);
+        assertFalse(id.getActorRef().isPresent());
+
+        // child2 stay alive.
+        child2.tell(34, ActorRef.noSender());
+        child2.tell("get", probe2.getRef());
+        probe2.expectMsg(34);
     }
 
     @Test
