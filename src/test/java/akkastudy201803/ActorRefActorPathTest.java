@@ -16,6 +16,7 @@ import akka.actor.ActorSystem;
 import akka.actor.Identify;
 import akka.actor.InvalidActorNameException;
 import akka.actor.Props;
+import akka.actor.Terminated;
 import akka.testkit.javadsl.TestKit;
 
 /**
@@ -157,4 +158,36 @@ public class ActorRefActorPathTest {
         s.tell(new HelloActor.Hello(), probe.getRef());
         probe.expectMsgEquals("hello alice");
     }
+
+    @Test(expected = InvalidActorNameException.class)
+    public void testDuplicatedActorPathNameNotAllowedForExistingActor() {
+        final String dupname = "actor-path-name-dup";
+        system.actorOf(HelloActor.props("ABC"), dupname);
+        system.actorOf(HelloActor.props("DEF"), dupname);
+    }
+
+    /**
+     * reusing actor-path is discouraged.
+     * @see https://doc.akka.io/docs/akka/current/general/addressing.html#reusing-actor-paths 
+     */
+    @Test
+    public void testDuplicatedActorPathNameAllowedAfterPreviousActorStopped() {
+        TestKit probe = new TestKit(system);
+        final String dupname = "actor-path-name-dup2";
+        ActorRef actor1 = system.actorOf(HelloActor.props("ABC"), dupname);
+        actor1.tell(new HelloActor.Hello(), probe.getRef());
+        probe.expectMsgEquals("hello ABC");
+        probe.watch(actor1);
+        system.stop(actor1);
+        probe.expectMsgClass(Terminated.class);
+
+        actor1.tell(new Identify(1), probe.getRef());
+        ActorIdentity id = probe.expectMsgClass(ActorIdentity.class);
+        assertFalse(id.getActorRef().isPresent());
+
+        ActorRef actor2 = system.actorOf(HelloActor.props("DEF"), dupname);
+        actor2.tell(new HelloActor.Hello(), probe.getRef());
+        probe.expectMsgEquals("hello DEF");
+    }
+
 }
