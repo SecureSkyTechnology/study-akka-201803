@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -157,6 +159,12 @@ public class ActorRefActorPathTest {
         assertEquals("/user/bob/alice", s.pathString());
         s.tell(new HelloActor.Hello(), probe.getRef());
         probe.expectMsgEquals("hello alice");
+
+        system.actorSelection("/user/bob/*").tell(new HelloActor.Hello(), probe.getRef());
+        List<String> msgs = probe.expectMsgAllOf("hello jon", "hello alice");
+        assertEquals(2, msgs.size());
+        assertTrue(msgs.contains("hello jon"));
+        assertTrue(msgs.contains("hello alice"));
     }
 
     @Test(expected = InvalidActorNameException.class)
