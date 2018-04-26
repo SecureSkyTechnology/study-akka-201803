@@ -8,6 +8,9 @@
   - Akka独自のロガーシステムを持っていて、デフォルトは INFO レベル、他のactorと同じスレッド上で動く非同期ロガー。
   - SLF4Jなどの個別ロガーAPIを利用することもできるが、もともと非同期で動作するactorの中で、同期呼び出しのロガーAPIを直接呼ぶとパフォーマンスが落ちる。
   - ログレベルは error, warning, info, debug から選べる。
+  - MDC利用可能 : https://doc.akka.io/docs/akka/2.5/logging.html#logging-thread-akka-source-and-actor-system-in-mdc
+  - Marker利用可能 : https://doc.akka.io/docs/akka/2.5/logging.html#using-markers
+  - Akka 自身の内部デバッグログ出力について : https://doc.akka.io/docs/akka/2.5/logging.html#auxiliary-logging-options
   - SLF4J のAPIをラップできる。依存関係に `ch.qos.logback:logback-classic` と `com.typesafe.akka:akka-slf4j_2.12` を加え、application.conf をカスタマイズする。
 
 ```
@@ -69,6 +72,14 @@ see : https://github.com/lightbend/config/issues/188
 - ActorRef, ActorPath からの存在確認
   - Identify -> ActorIdentity
   - https://doc.akka.io/docs/akka/2.5/actors.html#identifying-actors-via-actor-selection
+- ActorPath  で wildcard 指定して tell() するとどうなる？
+  - wildcard マッチした actor 全部にメッセージが送られる。
+  - https://doc.akka.io/docs/akka/2.5/general/addressing.html#querying-the-logical-actor-hierarchy
+- stop した Actor をあとになって同じ ActorPath で作り直せるか？
+  - 動いてるActorと同じActorPathで新しくActorは作れない。 actorOf() で InvalidActorNameException 例外が発生する。
+  - ただし、前のActorが停止状態であれば、同じActorPathで新しく別のActorを actorOf() で起動できる。
+  - ※公式ドキュメント上は ActorPath の再利用には慎重になるべき、というガイドがある。
+  - https://doc.akka.io/docs/akka/2.5/general/addressing.html#reusing-actor-paths
 - `getContext().stop()` によるActor自らの終了
   - https://doc.akka.io/docs/akka/2.5/actors.html#stopping-actors
 - PoisonPill による終了
