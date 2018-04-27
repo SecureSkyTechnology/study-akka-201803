@@ -13,6 +13,7 @@ import akkastudy201803.demo.FSMAutoStateTimeoutDemo;
 import akkastudy201803.demo.FSMTimerDemo;
 import akkastudy201803.demo.LoggingDemo;
 import akkastudy201803.demo.PinnedDispatcherDemo;
+import akkastudy201803.demo.SingleThreadedScheduleDemo;
 import akkastudy201803.demo.ThreadStarvationDemo;
 import akkastudy201803.demo.ThreadStarvationSolutionDemo;
 import akkastudy201803.demo.TickTackSchedulerDemo;
@@ -46,6 +47,7 @@ public class Main {
         new FSMTimerDemo(),
         new ActorMemoryLeakDemo(),
         new ActorMemoryLeakSolutionDemo(),
+        new SingleThreadedScheduleDemo(),
         // @formatter:on
         };
 
