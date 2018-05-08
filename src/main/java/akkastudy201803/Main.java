@@ -10,6 +10,7 @@ import akkastudy201803.demo.ActorStashDemo;
 import akkastudy201803.demo.AkkaQuartzSchedulerDemo;
 import akkastudy201803.demo.AkkaQuartzSchedulerFaultDemo;
 import akkastudy201803.demo.AkkaQuartzSchedulerForPinnedDispatcherDemo;
+import akkastudy201803.demo.AkkaQuartzSchedulerSkipLongRunningDemo;
 import akkastudy201803.demo.ConfigDemo;
 import akkastudy201803.demo.FSMAutoStateTimeoutDemo;
 import akkastudy201803.demo.FSMTimerDemo;
@@ -37,6 +38,7 @@ public class Main {
         new AkkaQuartzSchedulerDemo(),
         new AkkaQuartzSchedulerForPinnedDispatcherDemo(),
         new AkkaQuartzSchedulerFaultDemo(),
+        new AkkaQuartzSchedulerSkipLongRunningDemo(),
         new ActorReceiveTimeoutDemo(),
         new ActorStashDemo(),
         new ThreadStarvationDemo(),
