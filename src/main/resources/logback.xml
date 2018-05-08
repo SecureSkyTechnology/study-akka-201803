@@ -5,6 +5,9 @@
     </encoder>
   </appender>
 
+  <!-- see: https://stackoverflow.com/questions/21091536/stop-quartz-debug-logging-log4j -->
+  <logger name="org.quartz" level="WARN"/>
+
   <root level="${rootLogLevel:-DEBUG}">
     <appender-ref ref="STDOUT" />
   </root>

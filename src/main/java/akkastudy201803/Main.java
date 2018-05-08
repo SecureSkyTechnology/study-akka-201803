@@ -8,6 +8,8 @@ import akkastudy201803.demo.ActorMemoryLeakSolutionDemo;
 import akkastudy201803.demo.ActorReceiveTimeoutDemo;
 import akkastudy201803.demo.ActorStashDemo;
 import akkastudy201803.demo.AkkaQuartzSchedulerDemo;
+import akkastudy201803.demo.AkkaQuartzSchedulerFaultDemo;
+import akkastudy201803.demo.AkkaQuartzSchedulerForPinnedDispatcherDemo;
 import akkastudy201803.demo.ConfigDemo;
 import akkastudy201803.demo.FSMAutoStateTimeoutDemo;
 import akkastudy201803.demo.FSMTimerDemo;
@@ -33,6 +35,8 @@ public class Main {
         new LoggingDemo(),
         new ConfigDemo(),
         new AkkaQuartzSchedulerDemo(),
+        new AkkaQuartzSchedulerForPinnedDispatcherDemo(),
+        new AkkaQuartzSchedulerFaultDemo(),
         new ActorReceiveTimeoutDemo(),
         new ActorStashDemo(),
         new ThreadStarvationDemo(),
