@@ -6,6 +6,9 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.List;
 
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
+
 import com.typesafe.config.Config;
 
 import akka.actor.AbstractActorWithTimers;
@@ -14,6 +17,8 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.event.MarkerLoggingAdapter;
+import akka.event.slf4j.Slf4jLogMarker;
 
 /**
  * @see https://doc.akka.io/docs/akka/2.5/logging.html
@@ -33,6 +38,17 @@ public class LoggingDemo implements Runnable {
                 // NO TRACE LEVEL :P
                 log.info("placeholder demo1 : {}, {}, {}", "hello", 100, new URL("http://localhost/hello"));
                 log.info("placeholder demo2 : {}, {}, {}", new String[] { "abc", "def" });
+
+                /* see : https://doc.akka.io/docs/akka/2.5/logging.html#using-markers
+                 * see : https://github.com/akka/akka/blob/master/akka-slf4j/src/test/scala/akka/event/slf4j/Slf4jLoggerSpec.scala
+                 */
+                final MarkerLoggingAdapter mlog = Logging.withMarker(this);
+                final Marker slf4jRawMarker = MarkerFactory.getMarker("slf4j mark");
+                final Slf4jLogMarker marker = new Slf4jLogMarker(slf4jRawMarker);
+                mlog.error(marker, "slf4j marker logging, error-level demo");
+                mlog.warning(marker, "slf4j marker logging, warning-level demo");
+                mlog.info(marker, "slf4j marker logging, info-level demo");
+                mlog.debug(marker, "slf4j marker logging, debug-level demo");
             }).build();
         }
     }
