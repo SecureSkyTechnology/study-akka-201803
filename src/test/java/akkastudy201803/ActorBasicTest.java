@@ -76,6 +76,9 @@ public class ActorBasicTest {
         assertEquals(m.getMessage(), "xxxxx");
         assertEquals(m.getSender(), probe.getRef());
         assertEquals(m.getRecipient(), actor);
+
+        actor.tell("xxxxx", ActorRef.noSender());
+        // no error
     }
 
     static class SimpleMatchAnyActor extends AbstractActor {
