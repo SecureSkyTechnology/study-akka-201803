@@ -1,7 +1,7 @@
 <configuration>
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%d{ISO8601} [%thread] %marker %level %logger - %msg%n</pattern>
+      <pattern>%-40(%d{ISO8601}\(%X{akkaTimestamp}\)) %X{sourceActorSystem} %X{akkaSource} [%X{sourceThread}]\(%thread]\) marker=[%marker] %-5level %logger - %msg%n</pattern>
     </encoder>
   </appender>
 
