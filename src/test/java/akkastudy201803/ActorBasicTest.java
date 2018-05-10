@@ -420,4 +420,17 @@ public class ActorBasicTest {
         assertEquals(dl.recipient(), demo);
         assertEquals(dl.sender(), probe.getRef());
     }
+
+    @Test
+    public void testStopAndStopAndStop() {
+        TestKit probe = new TestKit(system);
+        ActorRef demo = system.actorOf(Props.empty());
+        probe.watch(demo);
+        system.stop(demo);
+        demo.tell(PoisonPill.getInstance(), ActorRef.noSender());
+        system.stop(demo);
+        demo.tell(PoisonPill.getInstance(), ActorRef.noSender());
+        system.stop(demo);
+        probe.expectTerminated(demo);
+    }
 }
