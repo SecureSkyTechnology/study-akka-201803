@@ -489,12 +489,18 @@ public class ActorBasicTest {
         ActorRef demo = system.actorOf(Props.create(ConstuctorExceptionDemoActor.class, 4, 2));
         demo.tell(new Object(), probe.getRef());
         probe.expectMsgEquals(2);
+
         ActorRef demo2 = system.actorOf(Props.create(ConstuctorExceptionDemoActor.class, 4, 0));
         // actorOf() does not throw any exception.
 
         demo2.tell(new Object(), probe.getRef());
         // message will send to dead-letter. nothing return.
         probe.expectNoMessage(FiniteDuration.create(100, TimeUnit.MILLISECONDS));
+
+        ActorRef demo3 = system.actorOf(Props.create(ConstuctorExceptionDemoActor.class, 4, 0));
+        probe.watch(demo3);
+        // watch -> receives Terminated message.
+        probe.expectTerminated(demo3);
     }
 
 }

@@ -67,6 +67,7 @@ see : https://github.com/lightbend/config/issues/188
   - actorOf()の引数でActorPathに使う名前を指定できる。`"/"` は含められない。 `"$"` から始めることもできない。
   - 基本的に、普通に英数といくつかの記号で名前を指定すれば、現在コンテキストからの相対パスとしてActorPathを設定できる。(= `"/"` から始める必要がない。始められない。)
   - 同じ名前を指定することはできない。(指定すると InvalidActorNameException が発生する)
+  - コンストラクタ中で例外が発生した場合は、そのactorはstop状態になる。actorOf() が何か例外を返すことは無い。ただし、watchすればTerminatedを受信できる。そのため、コンストラクタ中での例外発生を気にするようでああればwatchしてみるのが良いかも。
 - ライフサイクル
   - https://doc.akka.io/docs/akka/2.5/actors.html#actor-lifecycle
 - ActorRef, ActorPath からの存在確認
@@ -125,6 +126,9 @@ stop した Actor はメモリ上からGCなどで削除される？
   - https://doc.akka.io/docs/akka/2.5/fault-tolerance.html#default-supervisor-strategy
 - `getContext().stop()` などで通常の流れで stop した Actor は、 supervisor からは restart されない。
   - 基本的に例外発生でのrestartとなり、例外無しにstopしたものについてはstopしたままとなる。
+- `maxNrOfRetries` で 0 を指定すると、一度でもrestart扱いの例外が発生したら、即stopになる。事実上、何か例外が発生したらそのままstopする。
+- `DeciderBuilder.matchAny(o -> SupervisorStrategy.stop())` しても、何か例外が発生したらstopするだけになる。これだと、 `maxNrOfRetries` に何を指定しても結果としてrestartが一切発生せず、例外即stopになる。
+
 
 ## ディスパッチャーとスレッド/アクターの配置
 
