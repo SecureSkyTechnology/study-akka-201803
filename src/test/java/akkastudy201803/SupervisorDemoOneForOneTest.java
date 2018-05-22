@@ -376,4 +376,132 @@ public class SupervisorDemoOneForOneTest {
         probe.expectMsg(0);
     }
 
+    @Test
+    public void testRetryCountIs1() throws Exception {
+        TestKit probe = new TestKit(system);
+        ActorRef supervisor =
+            system.actorOf(Props.create(OneForOneSuperVisorDemo.class, 1), "one-for-one-supervisor-demo-retry-1");
+        supervisor.tell(Props.create(Child.class), probe.getRef());
+        ActorRef child = probe.expectMsgClass(ActorRef.class);
+
+        child.tell(42, ActorRef.noSender());
+        child.tell("get", probe.getRef());
+        probe.expectMsg(42);
+
+        // 1st restart.
+        child.tell(new NullPointerException(), ActorRef.noSender());
+        child.tell("get", probe.getRef());
+        probe.expectMsg(0);
+
+        child.tell(21, ActorRef.noSender());
+        child.tell("get", probe.getRef());
+        probe.expectMsg(21);
+
+        // 2nd restart -> retry over, stop.
+        probe.watch(child);
+        child.tell(new NullPointerException(), ActorRef.noSender());
+        probe.expectMsgClass(Terminated.class);
+        // child actor was stopped.
+        child.tell(new Identify(1), probe.getRef());
+        ActorIdentity id = probe.expectMsgClass(ActorIdentity.class);
+        assertFalse(id.getActorRef().isPresent());
+    }
+
+    @Test
+    public void testRetryCountIs0() throws Exception {
+        TestKit probe = new TestKit(system);
+        ActorRef supervisor =
+            system.actorOf(Props.create(OneForOneSuperVisorDemo.class, 0), "one-for-one-supervisor-demo-retry-0");
+        supervisor.tell(Props.create(Child.class), probe.getRef());
+        ActorRef child = probe.expectMsgClass(ActorRef.class);
+
+        child.tell(42, ActorRef.noSender());
+        child.tell("get", probe.getRef());
+        probe.expectMsg(42);
+
+        // 1st restart -> retry over, stop.
+        probe.watch(child);
+        child.tell(new NullPointerException(), ActorRef.noSender());
+        probe.expectMsgClass(Terminated.class);
+        // child actor was stopped.
+        child.tell(new Identify(1), probe.getRef());
+        ActorIdentity id = probe.expectMsgClass(ActorIdentity.class);
+        assertFalse(id.getActorRef().isPresent());
+    }
+
+    static class OneForOneSuperVisorAllStopDemo extends AbstractActor {
+        final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+
+        private final SupervisorStrategy strategy;
+
+        public OneForOneSuperVisorAllStopDemo() {
+            strategy =
+                new OneForOneStrategy(
+                    10,
+                    Duration.create(1, TimeUnit.MINUTES),
+                    DeciderBuilder.matchAny(o -> SupervisorStrategy.stop()).build());
+        }
+
+        @Override
+        public SupervisorStrategy supervisorStrategy() {
+            return strategy;
+        }
+
+        @Override
+        public void preStart() throws Exception {
+            log.info("preStart() : before super's");
+            super.preStart();
+            log.info("preStart() : after super's");
+        }
+
+        @Override
+        public void postStop() throws Exception {
+            log.info("postStop() : before super's");
+            super.postStop();
+            log.info("postStop() : after super's");
+        }
+
+        @Override
+        public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
+            log.info("preRestart() : before super's, reason={},{}", reason.getClass(), reason.getMessage());
+            super.preRestart(reason, message);
+            log.info("preRestart() : after super's, reason={},{}", reason.getClass(), reason.getMessage());
+        }
+
+        @Override
+        public void postRestart(Throwable reason) throws Exception {
+            log.info("postRestart() : before super's, reason={},{}", reason.getClass(), reason.getMessage());
+            super.postRestart(reason);
+            log.info("postRestart() : after super's, reason={},{}", reason.getClass(), reason.getMessage());
+        }
+
+        @Override
+        public Receive createReceive() {
+            return receiveBuilder().match(Props.class, props -> {
+                getSender().tell(getContext().actorOf(props), getSelf());
+            }).build();
+        }
+    }
+
+    @Test
+    public void testAllStopDemo() throws Exception {
+        TestKit probe = new TestKit(system);
+        ActorRef supervisor =
+            system.actorOf(Props.create(OneForOneSuperVisorAllStopDemo.class), "one-for-one-supervisor-all-stop-demo");
+        supervisor.tell(Props.create(Child.class), probe.getRef());
+        ActorRef child = probe.expectMsgClass(ActorRef.class);
+
+        child.tell(42, ActorRef.noSender());
+        child.tell("get", probe.getRef());
+        probe.expectMsg(42);
+
+        // 1st exception -> stop.
+        probe.watch(child);
+        child.tell(new NullPointerException(), ActorRef.noSender());
+        probe.expectMsgClass(Terminated.class);
+        // child actor was stopped.
+        child.tell(new Identify(1), probe.getRef());
+        ActorIdentity id = probe.expectMsgClass(ActorIdentity.class);
+        assertFalse(id.getActorRef().isPresent());
+    }
 }
