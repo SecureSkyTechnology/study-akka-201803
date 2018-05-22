@@ -30,6 +30,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.testkit.javadsl.TestKit;
 import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 /**
  * @see https://doc.akka.io/docs/akka/2.5/actors.html
@@ -436,4 +437,64 @@ public class ActorBasicTest {
         system.stop(demo);
         probe.expectTerminated(demo);
     }
+
+    static class ConstuctorExceptionDemoActor extends AbstractActor {
+        final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+        final UUID uuid = UUID.randomUUID();
+        final int c;
+
+        public ConstuctorExceptionDemoActor(int a, int b) {
+            c = a / b;
+        }
+
+        @Override
+        public void preStart() throws Exception {
+            log.info("[{}] preStart() demo[before super.preStart()]", this.uuid);
+            super.preStart();
+            log.info("[{}] preStart() demo[after super.preStart()]", this.uuid);
+        }
+
+        @Override
+        public void postStop() throws Exception {
+            log.info("[{}] postStop() demo[before super.postStop()]", this.uuid);
+            super.postStop();
+            log.info("[{}] postStop() demo[after super.postStop()]", this.uuid);
+        }
+
+        @Override
+        public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
+            log.info("[{}] preRestart() demo[before super.preRestart()]", this.uuid);
+            super.preRestart(reason, message);
+            log.info("[{}] preRestart() demo[after super.preRestart()]", this.uuid);
+        }
+
+        @Override
+        public void postRestart(Throwable reason) throws Exception {
+            log.info("[{}] postRestart() demo[before super.postRestart()]", this.uuid);
+            super.postRestart(reason);
+            log.info("[{}] postRestart() demo[after super.postRestart()]", this.uuid);
+        }
+
+        @Override
+        public Receive createReceive() {
+            return receiveBuilder().matchAny(m -> {
+                getSender().tell(c, getSelf());
+            }).build();
+        }
+    }
+
+    @Test
+    public void testConstructorException() {
+        TestKit probe = new TestKit(system);
+        ActorRef demo = system.actorOf(Props.create(ConstuctorExceptionDemoActor.class, 4, 2));
+        demo.tell(new Object(), probe.getRef());
+        probe.expectMsgEquals(2);
+        ActorRef demo2 = system.actorOf(Props.create(ConstuctorExceptionDemoActor.class, 4, 0));
+        // actorOf() does not throw any exception.
+
+        demo2.tell(new Object(), probe.getRef());
+        // message will send to dead-letter. nothing return.
+        probe.expectNoMessage(FiniteDuration.create(100, TimeUnit.MILLISECONDS));
+    }
+
 }
