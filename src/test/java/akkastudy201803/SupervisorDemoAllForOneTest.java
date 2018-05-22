@@ -351,4 +351,194 @@ public class SupervisorDemoAllForOneTest {
         div2.tell(new Object(), probe.getRef());
         probe.expectMsg(5);
     }
+
+    @Test
+    public void testSupervisorRetryMaxIs0() throws Exception {
+        TestKit probe1 = new TestKit(system);
+        TestKit probe2 = new TestKit(system);
+        ActorRef supervisor =
+            system.actorOf(Props.create(AllForOneSuperVisorDemo.class, 0), "all-for-one-supervisor-demo-4-retry-max-0");
+
+        supervisor.tell("div1", probe1.getRef());
+        ActorRef div1 = probe1.expectMsgClass(ActorRef.class);
+        probe1.watch(div1);
+        supervisor.tell("div2", probe2.getRef());
+        ActorRef div2 = probe2.expectMsgClass(ActorRef.class);
+        probe2.watch(div2);
+
+        div1.tell(new DivPair(6, 3), probe1.getRef());
+        probe1.expectMsg(2);
+        div2.tell(new DivPair(6, 2), probe2.getRef());
+        probe2.expectMsg(3);
+
+        // 1st exception -> retry over, stop.
+        div1.tell(new DivPair(1, 0), probe1.getRef());
+        // all-for-one => stop all children.
+
+        probe1.expectMsgClass(Terminated.class);
+        div1.tell(new Identify(1), probe1.getRef());
+        ActorIdentity id1 = probe1.expectMsgClass(ActorIdentity.class);
+        assertFalse(id1.getActorRef().isPresent());
+
+        probe2.expectMsgClass(Terminated.class);
+        div2.tell(new Identify(2), probe2.getRef());
+        ActorIdentity id2 = probe2.expectMsgClass(ActorIdentity.class);
+        assertFalse(id2.getActorRef().isPresent());
+    }
+
+    @Test
+    public void testSupervisorRetryMaxIs0ButSelfStop() throws Exception {
+        TestKit probe1 = new TestKit(system);
+        TestKit probe2 = new TestKit(system);
+        ActorRef supervisor =
+            system.actorOf(Props.create(AllForOneSuperVisorDemo.class, 0), "all-for-one-supervisor-demo-5-retry-max-0");
+
+        supervisor.tell("div1", probe1.getRef());
+        ActorRef div1 = probe1.expectMsgClass(ActorRef.class);
+        probe1.watch(div1);
+        supervisor.tell("div2", probe2.getRef());
+        ActorRef div2 = probe2.expectMsgClass(ActorRef.class);
+        probe2.watch(div2);
+
+        div1.tell(new DivPair(6, 3), probe1.getRef());
+        probe1.expectMsg(2);
+        div2.tell(new DivPair(6, 2), probe2.getRef());
+        probe2.expectMsg(3);
+
+        // div1 self stop.
+        div1.tell("done", probe1.getRef());
+
+        probe1.expectMsgClass(Terminated.class);
+        div1.tell(new Identify(1), probe1.getRef());
+        ActorIdentity id1 = probe1.expectMsgClass(ActorIdentity.class);
+        assertFalse(id1.getActorRef().isPresent());
+
+        // self stop does not invoke supervisor's exception matcher -> div2 still alive.
+        div2.tell(new DivPair(10, 2), probe2.getRef());
+        probe2.expectMsg(5);
+    }
+
+    static class AllForOneSuperVisorAllStopDemo extends AbstractActor {
+        final LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+        final Props props = Props.create(DivActor.class);
+        private final SupervisorStrategy strategy;
+
+        AllForOneSuperVisorAllStopDemo() {
+            strategy = new AllForOneStrategy(
+                /* -1 to maxNrOfRetries, and a non-infinite Duration to withinTimeRange
+                 * then maxNrOfRetries is treated as 1
+                 */
+                10,
+                Duration.create(1, TimeUnit.MINUTES),
+                DeciderBuilder.matchAny(o -> SupervisorStrategy.stop()).build());
+        }
+
+        @Override
+        public SupervisorStrategy supervisorStrategy() {
+            return strategy;
+        }
+
+        @Override
+        public void preStart() throws Exception {
+            log.info("preStart() : before super's");
+            super.preStart();
+            log.info("preStart() : after super's");
+        }
+
+        @Override
+        public void postStop() throws Exception {
+            log.info("postStop() : before super's");
+            super.postStop();
+            log.info("postStop() : after super's");
+        }
+
+        @Override
+        public void preRestart(Throwable reason, Optional<Object> message) throws Exception {
+            log.info("preRestart() : before super's, reason={},{}", reason.getClass(), reason.getMessage());
+            super.preRestart(reason, message);
+            log.info("preRestart() : after super's, reason={},{}", reason.getClass(), reason.getMessage());
+        }
+
+        @Override
+        public void postRestart(Throwable reason) throws Exception {
+            log.info("postRestart() : before super's, reason={},{}", reason.getClass(), reason.getMessage());
+            super.postRestart(reason);
+            log.info("postRestart() : after super's, reason={},{}", reason.getClass(), reason.getMessage());
+        }
+
+        @Override
+        public Receive createReceive() {
+            return receiveBuilder().match(String.class, m -> {
+                getSender().tell(getContext().actorOf(props, m), getSelf());
+            }).build();
+        }
+    }
+
+    @Test
+    public void testAllStopDemo() throws Exception {
+        TestKit probe1 = new TestKit(system);
+        TestKit probe2 = new TestKit(system);
+        ActorRef supervisor =
+            system.actorOf(Props.create(AllForOneSuperVisorAllStopDemo.class), "all-for-one-supervisor-all-stop-demo");
+
+        supervisor.tell("div1", probe1.getRef());
+        ActorRef div1 = probe1.expectMsgClass(ActorRef.class);
+        probe1.watch(div1);
+        supervisor.tell("div2", probe2.getRef());
+        ActorRef div2 = probe2.expectMsgClass(ActorRef.class);
+        probe2.watch(div2);
+
+        div1.tell(new DivPair(6, 3), probe1.getRef());
+        probe1.expectMsg(2);
+        div2.tell(new DivPair(6, 2), probe2.getRef());
+        probe2.expectMsg(3);
+
+        // 1st exception -> stop.
+        div1.tell(new DivPair(1, 0), probe1.getRef());
+        // all-for-one => stop all children.
+
+        probe1.expectMsgClass(Terminated.class);
+        div1.tell(new Identify(1), probe1.getRef());
+        ActorIdentity id1 = probe1.expectMsgClass(ActorIdentity.class);
+        assertFalse(id1.getActorRef().isPresent());
+
+        probe2.expectMsgClass(Terminated.class);
+        div2.tell(new Identify(2), probe2.getRef());
+        ActorIdentity id2 = probe2.expectMsgClass(ActorIdentity.class);
+        assertFalse(id2.getActorRef().isPresent());
+    }
+
+    @Test
+    public void testAllStopDemoButSelfStop() throws Exception {
+        TestKit probe1 = new TestKit(system);
+        TestKit probe2 = new TestKit(system);
+        ActorRef supervisor =
+            system.actorOf(
+                Props.create(AllForOneSuperVisorAllStopDemo.class),
+                "all-for-one-supervisor-all-stop-demo-self-stop");
+
+        supervisor.tell("div1", probe1.getRef());
+        ActorRef div1 = probe1.expectMsgClass(ActorRef.class);
+        probe1.watch(div1);
+        supervisor.tell("div2", probe2.getRef());
+        ActorRef div2 = probe2.expectMsgClass(ActorRef.class);
+        probe2.watch(div2);
+
+        div1.tell(new DivPair(6, 3), probe1.getRef());
+        probe1.expectMsg(2);
+        div2.tell(new DivPair(6, 2), probe2.getRef());
+        probe2.expectMsg(3);
+
+        // div1 self stop.
+        div1.tell("done", probe1.getRef());
+
+        probe1.expectMsgClass(Terminated.class);
+        div1.tell(new Identify(1), probe1.getRef());
+        ActorIdentity id1 = probe1.expectMsgClass(ActorIdentity.class);
+        assertFalse(id1.getActorRef().isPresent());
+
+        // self stop does not invoke supervisor's exception matcher -> div2 still alive.
+        div2.tell(new DivPair(10, 2), probe2.getRef());
+        probe2.expectMsg(5);
+    }
 }

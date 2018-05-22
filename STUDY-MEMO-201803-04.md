@@ -128,6 +128,8 @@ stop した Actor はメモリ上からGCなどで削除される？
   - 基本的に例外発生でのrestartとなり、例外無しにstopしたものについてはstopしたままとなる。
 - `maxNrOfRetries` で 0 を指定すると、一度でもrestart扱いの例外が発生したら、即stopになる。事実上、何か例外が発生したらそのままstopする。
 - `DeciderBuilder.matchAny(o -> SupervisorStrategy.stop())` しても、何か例外が発生したらstopするだけになる。これだと、 `maxNrOfRetries` に何を指定しても結果としてrestartが一切発生せず、例外即stopになる。
+- `AllForOneStrategy` で `maxNrOfRetries = 0` または `DeciderBuilder.matchAny(o -> SupervisorStrategy.stop())` を適用すると、事実上、どれか一つの子actorで何か例外が発生すれば、即全ての子actorをstopさせることになる。
+- さらに、例外発生ではなく通常通りの終了 ( `getContext().stop(getSelf())` など ) は上記影響は受けない。つまり上記のような `AllForOneStrategy` の配下で動いている子actorの一つが、例外を発生させずに自らstopしただけであれば、他の子actorには影響しない。
 
 
 ## ディスパッチャーとスレッド/アクターの配置
