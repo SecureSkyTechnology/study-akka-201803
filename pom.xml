@@ -26,7 +26,7 @@
     <java.compiler.debug>true</java.compiler.debug>
     <exec.mainClass>akkastudy201803.Main</exec.mainClass>
 
-    <akka.version>2.5.11</akka.version>
+    <akka.version>2.5.17</akka.version>
   </properties>
 
   <dependencies>
