@@ -2,7 +2,7 @@ package akkastudy201803;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -16,7 +16,6 @@ import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.actor.Terminated;
 import akka.testkit.javadsl.TestKit;
-import scala.concurrent.duration.Duration;
 
 /**
  * @see https://doc.akka.io/docs/akka/current/testing.html
@@ -60,13 +59,13 @@ public class TestKitSampleTest {
                 final ActorRef subject = system.actorOf(Props.create(SomeActor.class));
                 final TestKit probe = new TestKit(system);
                 subject.tell(probe.getRef(), getRef());
-                expectMsg(duration("1 second"), "done");
+                expectMsg(Duration.ofSeconds(1), "done");
 
-                within(duration("3 seconds"), () -> {
+                within(Duration.ofSeconds(3), () -> {
                     subject.tell("hello", getRef());
                     awaitCond(probe::msgAvailable);
-                    expectMsg(Duration.Zero(), "world");
-                    probe.expectMsg(Duration.Zero(), "hello");
+                    expectMsg(Duration.ZERO, "world");
+                    probe.expectMsg(Duration.ZERO, "hello");
                     assertEquals(getRef(), probe.getLastSender());
                     expectNoMessage();
                     return null;
@@ -90,8 +89,7 @@ public class TestKitSampleTest {
         }
 
         void triggerScheduling() {
-            getTimers()
-                .startSingleTimer(SCHED_KEY, new ScheduledMessage(), Duration.create(500, TimeUnit.MILLISECONDS));
+            getTimers().startSingleTimer(SCHED_KEY, new ScheduledMessage(), Duration.ofMillis(500));
         }
     }
 
@@ -112,7 +110,7 @@ public class TestKitSampleTest {
     public void testWithinDuration() {
         final TestKit probe = new TestKit(system);
         probe.getRef().tell(42, ActorRef.noSender());
-        probe.within(Duration.Zero(), Duration.create(1, "second"), () -> {
+        probe.within(Duration.ZERO, Duration.ofSeconds(1), () -> {
             assertEquals((Integer) 42, probe.expectMsgClass(Integer.class));
             return null;
         });

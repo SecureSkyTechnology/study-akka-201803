@@ -5,9 +5,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.AfterClass;
@@ -29,8 +29,6 @@ import akka.actor.UnhandledMessage;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.testkit.javadsl.TestKit;
-import scala.concurrent.duration.Duration;
-import scala.concurrent.duration.FiniteDuration;
 
 /**
  * @see https://doc.akka.io/docs/akka/2.5/actors.html
@@ -143,7 +141,7 @@ public class ActorBasicTest {
         ActorRef actor = system.actorOf(Props.create(HelloWorldActor.class));
         Inbox inbox = Inbox.create(system);
         inbox.send(actor, "hello");
-        assertEquals(inbox.receive(Duration.Zero()), "world");
+        assertEquals(inbox.receive(Duration.ZERO), "world");
     }
 
     @Test
@@ -152,7 +150,7 @@ public class ActorBasicTest {
         Inbox inbox = Inbox.create(system);
         inbox.watch(actor);
         actor.tell(PoisonPill.getInstance(), ActorRef.noSender());
-        assertTrue(inbox.receive(Duration.create(1, TimeUnit.SECONDS)) instanceof Terminated);
+        assertTrue(inbox.receive(Duration.ofSeconds(1)) instanceof Terminated);
     }
 
     static class BecomeDemoActor extends AbstractActor {
@@ -495,7 +493,7 @@ public class ActorBasicTest {
 
         demo2.tell(new Object(), probe.getRef());
         // message will send to dead-letter. nothing return.
-        probe.expectNoMessage(FiniteDuration.create(100, TimeUnit.MILLISECONDS));
+        probe.expectNoMessage(Duration.ofMillis(100));
 
         ActorRef demo3 = system.actorOf(Props.create(ConstuctorExceptionDemoActor.class, 4, 0));
         probe.watch(demo3);

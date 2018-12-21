@@ -1,6 +1,6 @@
 package akkastudy201803;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -13,7 +13,6 @@ import akka.event.japi.ScanningEventBus;
 import akka.event.japi.SubchannelEventBus;
 import akka.testkit.javadsl.TestKit;
 import akka.util.Subclassification;
-import scala.concurrent.duration.FiniteDuration;
 
 /**
  * Event Bus sample from:
@@ -167,6 +166,6 @@ public class EventBusDemoTest {
         scanningBus.publish("abc");
         probe.expectMsgEquals("abc");
         scanningBus.publish("abcd");
-        probe.expectNoMessage(FiniteDuration.create(1, TimeUnit.SECONDS));
+        probe.expectNoMessage(Duration.ofSeconds(1));
     }
 }

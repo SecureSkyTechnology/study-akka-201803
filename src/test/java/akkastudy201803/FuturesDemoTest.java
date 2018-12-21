@@ -3,6 +3,7 @@ package akkastudy201803;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -28,7 +30,6 @@ import akka.dispatch.Recover;
 import akka.japi.Function;
 import akka.japi.Function2;
 import akka.pattern.Patterns;
-import akka.pattern.PatternsCS;
 import akka.testkit.javadsl.TestKit;
 import akka.util.Timeout;
 import scala.compat.java8.FutureConverters;
@@ -36,7 +37,7 @@ import scala.concurrent.Await;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
-import scala.concurrent.duration.Duration;
+import scala.concurrent.duration.FiniteDuration;
 
 /**
  * @see https://doc.akka.io/docs/akka/2.5/futures.html
@@ -78,7 +79,7 @@ public class FuturesDemoTest {
     @Test
     public void testSimpleFutureAskDemo() throws Exception {
         final ActorRef hello = system.actorOf(Props.create(DelayedHelloActor.class));
-        Timeout timeout = new Timeout(Duration.create(1, "second"));
+        Timeout timeout = new Timeout(1, TimeUnit.SECONDS);
         Future<Object> future = Patterns.ask(hello, "bob", timeout);
         String result = (String) Await.result(future, timeout.duration());
         assertEquals("hello, bob", result);
@@ -87,7 +88,7 @@ public class FuturesDemoTest {
     @Test
     public void testSimpleFuturePipeDemo() throws Exception {
         final ActorRef hello = system.actorOf(Props.create(DelayedHelloActor.class));
-        Timeout timeout = new Timeout(Duration.create(1, "second"));
+        Timeout timeout = new Timeout(1, TimeUnit.SECONDS);
         Future<Object> future = Patterns.ask(hello, "bob", timeout);
         TestKit probe = new TestKit(system);
         Patterns.pipe(future, system.dispatcher()).to(probe.getRef());
@@ -377,7 +378,7 @@ public class FuturesDemoTest {
                 }
             }
         }, ec);
-        Timeout timeout = new Timeout(Duration.create(1, "second"));
+        Timeout timeout = new Timeout(1, TimeUnit.SECONDS);
         Integer result = (Integer) Await.result(f0, timeout.duration());
         assertEquals(result.intValue(), -1);
     }
@@ -397,7 +398,7 @@ public class FuturesDemoTest {
                 }
             }
         }, ec);
-        Timeout timeout = new Timeout(Duration.create(1, "second"));
+        Timeout timeout = new Timeout(1, TimeUnit.SECONDS);
         Integer result = (Integer) Await.result(f0, timeout.duration());
         assertEquals(result.intValue(), -1);
     }
@@ -411,7 +412,7 @@ public class FuturesDemoTest {
         final ExecutionContext ec = system.dispatcher();
         Future<String> failedFuture = Futures.failed(new IllegalStateException("ex0"));
         Future<String> afterFuture =
-            Patterns.after(Duration.create(200, "millis"), system.scheduler(), ec, failedFuture);
+            Patterns.after(FiniteDuration.create(200, TimeUnit.MILLISECONDS), system.scheduler(), ec, failedFuture);
         Future<String> f1 = Futures.future(() -> {
             Thread.sleep(500);
             return "foo";
@@ -548,9 +549,8 @@ public class FuturesDemoTest {
     @Test
     public void testAskAndCompletableFutureAndPipeDemo() {
         final ActorRef hello = system.actorOf(Props.create(DelayedHelloActor.class));
-        Timeout timeout = new Timeout(Duration.create(1, "second"));
-        CompletableFuture<Object> f1 = PatternsCS.ask(hello, "bob", timeout).toCompletableFuture();
-        CompletableFuture<Object> f2 = PatternsCS.ask(hello, "jon", 1000).toCompletableFuture();
+        CompletableFuture<Object> f1 = Patterns.ask(hello, "bob", Duration.ofSeconds(1)).toCompletableFuture();
+        CompletableFuture<Object> f2 = FutureConverters.toJava(Patterns.ask(hello, "jon", 1000)).toCompletableFuture();
 
         CompletableFuture<String> transformed = CompletableFuture.allOf(f1, f2).thenApply(v -> {
             final String s1 = (String) f1.join();
@@ -558,7 +558,7 @@ public class FuturesDemoTest {
             return s1 + "/" + s2;
         });
         TestKit probe = new TestKit(system);
-        PatternsCS.pipe(transformed, system.dispatcher()).to(probe.getRef());
+        Patterns.pipe(transformed, system.dispatcher()).to(probe.getRef());
         probe.expectMsgEquals("hello, bob/hello, jon");
     }
 
@@ -566,7 +566,7 @@ public class FuturesDemoTest {
     public void testAskAndScalaFutureAndPipeDemo() {
         final ExecutionContext ec = system.dispatcher();
         final ActorRef hello = system.actorOf(Props.create(DelayedHelloActor.class));
-        Timeout timeout = new Timeout(Duration.create(1, "second"));
+        Timeout timeout = new Timeout(1, TimeUnit.SECONDS);
         Future<Object> f1 = Patterns.ask(hello, "bob", timeout);
         Future<Object> f2 = Patterns.ask(hello, "jon", timeout);
 
