@@ -52,6 +52,7 @@ public class AkkaQuartzSchedulerSkipLongRunningDemo implements Runnable {
                 try {
                     log.info(">> blocking op start for {} secs.", this.blockSec);
                     Thread.sleep(this.blockSec * 1000);
+                    @SuppressWarnings("unused")
                     final int dummy = BLOCKSEC_START / divisor;
                     log.info("<< blocking op end.");
                 } catch (InterruptedException ignore) {
