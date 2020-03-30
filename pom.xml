@@ -49,7 +49,7 @@
       <!-- see : https://doc.akka.io/docs/akka/2.5/java8-compat.html -->
       <groupId>org.scala-lang.modules</groupId>
       <artifactId>scala-java8-compat_2.12</artifactId>
-      <version>0.8.0</version>
+      <version>0.9.1</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
