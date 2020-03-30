@@ -37,7 +37,6 @@ import scala.concurrent.Await;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
 import scala.concurrent.Promise;
-import scala.concurrent.duration.FiniteDuration;
 
 /**
  * @see https://doc.akka.io/docs/akka/2.5/futures.html
@@ -412,7 +411,9 @@ public class FuturesDemoTest {
         final ExecutionContext ec = system.dispatcher();
         Future<String> failedFuture = Futures.failed(new IllegalStateException("ex0"));
         Future<String> afterFuture =
-            Patterns.after(FiniteDuration.create(200, TimeUnit.MILLISECONDS), system.scheduler(), ec, failedFuture);
+            Patterns.after(Timeout.create(Duration.ofMillis(200)).duration(), system.scheduler(), ec, () -> {
+                return failedFuture;
+            });
         Future<String> f1 = Futures.future(() -> {
             Thread.sleep(500);
             return "foo";
