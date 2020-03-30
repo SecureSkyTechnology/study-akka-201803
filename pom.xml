@@ -59,7 +59,7 @@
     <dependency>
       <groupId>com.enragedginger</groupId>
       <artifactId>akka-quartz-scheduler_2.12</artifactId>
-      <version>1.6.1-akka-2.5.x</version>
+      <version>1.8.1-akka-2.5.x</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
