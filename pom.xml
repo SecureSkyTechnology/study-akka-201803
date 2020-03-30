@@ -26,7 +26,7 @@
     <java.compiler.debug>true</java.compiler.debug>
     <exec.mainClass>akkastudy201803.Main</exec.mainClass>
 
-    <akka.version>2.5.19</akka.version>
+    <akka.version>2.5.30</akka.version>
   </properties>
 
   <dependencies>
@@ -49,7 +49,7 @@
       <!-- see : https://doc.akka.io/docs/akka/2.5/java8-compat.html -->
       <groupId>org.scala-lang.modules</groupId>
       <artifactId>scala-java8-compat_2.12</artifactId>
-      <version>0.8.0</version>
+      <version>0.9.1</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -59,7 +59,7 @@
     <dependency>
       <groupId>com.enragedginger</groupId>
       <artifactId>akka-quartz-scheduler_2.12</artifactId>
-      <version>1.6.1-akka-2.5.x</version>
+      <version>1.8.1-akka-2.5.x</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
