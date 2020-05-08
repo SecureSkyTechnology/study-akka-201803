@@ -1,7 +1,24 @@
 <configuration>
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>%-40(%d{ISO8601}\(%X{akkaTimestamp}\)) %X{sourceActorSystem} %X{akkaSource} [%X{sourceThread}]\(%thread]\) marker=[%marker] %-5level %logger - %msg%n</pattern>
+      <!--
+      ref: https://doc.akka.io/docs/akka/2.5/logging.html#logging-thread-akka-source-and-actor-system-in-mdc
+
+      %X{akkaTimestamp}:
+      akka + slf4j ではロギングは別スレッドで非同期に処理される。
+      そのため %d ではロギング側でログ出力した時のタイムスタンプが表示されてしまう。
+      => akka 独自のMDCで akkaTimestamp というのが組み込まれ、こちらが、実際にactor側でログ出力メソッドを呼んだ日時を格納する。
+      (%X{akkaTimestamp} のあとに %d という時刻関係になる)
+
+      %X{sourceThread}:
+      akka + slf4j ではロギングは別スレッドで非同期に処理される。
+      そのため %t / %thread ではロギング側のスレッドが表示されることとなってしまう。
+      => akka 独自のMDCで sourceThread というのが組み込まれ、こちらが、実際にロガーが呼ばれたスレッドを格納するのでそれを使える。
+
+      %X{akkaSource}: ロガーを呼んだ actor のアドレス
+      %X{sourceActorSystem}: ロガーを呼んだ ActorSystem
+      -->
+      <pattern>%-40(%d{ISO8601}\(%X{akkaTimestamp}\)) %X{sourceActorSystem} %X{akkaSource} [%X{sourceThread}]\(%thread]\) marker=[%marker] %-5level [%X{mdcval1:-_MDC1_}] [%X{mdcval2:-_MDC2_}] %logger - %msg%n</pattern>
     </encoder>
   </appender>
 
