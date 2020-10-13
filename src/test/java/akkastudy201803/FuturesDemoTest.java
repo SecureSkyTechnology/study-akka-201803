@@ -553,11 +553,44 @@ public class FuturesDemoTest {
         CompletableFuture<Object> f1 = Patterns.ask(hello, "bob", Duration.ofSeconds(1)).toCompletableFuture();
         CompletableFuture<Object> f2 = FutureConverters.toJava(Patterns.ask(hello, "jon", 1000)).toCompletableFuture();
 
+        /* NOTE: 次の書き方だと、高確率で DelayedHelloActor からのレスポンスのタイムアウトでエラーになる。
+         * 
         CompletableFuture<String> transformed = CompletableFuture.allOf(f1, f2).thenApply(v -> {
             final String s1 = (String) f1.join();
             final String s2 = (String) f2.join();
             return s1 + "/" + s2;
         });
+         *
+         * 他の DelayedHelloActor を使ったテストケースは問題ないのに、なぜこれだけそうなるか？
+         * -> CompletableFuture.allOf(...) は javadoc によると
+         * "指定されたすべてのCompletableFutureが完了したときに完了する新しいCompletableFutureを返" す。
+         * このとき、非同期で動作する処理は少なくとも以下の4つが出てくる。
+         * 1. ここのテストメソッドを実行中のスレッド
+         * 2. DelayedHelloActor をdispatchする/される予定のスレッド
+         * 3. f1 のスレッド
+         * 4. f2 のスレッド
+         * ここで 2. については特に dispatcher を指定していない。
+         * また 3., 4. の生成でも特に dispatcher を指定していない。
+         * そうなると、akka-system 内部が2個のスレッドしかたまたま空いてなかったときに、
+         * その2個のスレッドに f1, f2 が先行して埋まってしまい、
+         * その後に 2. の DelayedHelloActor が queueing されてしまうと、
+         * f1, f2 とも1秒間レスポンスを待ち続けるが、肝心の 2. がその後ろでwaiting状態になるため、
+         * 2. の処理が動かず f1, f2 とも timeout になる。
+         * 
+         * これが失敗ケースで発生したf1/f2のレスポンスタイムアウト状況を説明できる
+         * 一番簡単なモデルとなる。
+         * 逆に、「成功」するときはたまたま f1/f2 のいずれかより早く DelayedHelloActor
+         * が dispatcher で動き出し、幸いにも f1/f2 の片方に対してレスポンスを返し、
+         * それによりさらにもう片方も動き出し・・・ということで正常に動作したものと思われる。
+         * 
+         * -> 解決策として、そもそもやりたいことは Patterns.ask を Java の CompletableFuture
+         * に変換するユースケースのデモであり、処理の例示として CompletableFuture を 2つ作成し、
+         * それを連鎖して結合した結果を返したい。
+         * その目的であれば CompletionStage.thenCombine() が適しており、
+         * 実際それに変更したところ失敗することが無くなり、テストケースが安定した。 
+         */
+        CompletableFuture<String> transformed =
+            f1.thenCombine(f2, (Object s1, Object s2) -> s1.toString() + "/" + s2.toString());
         TestKit probe = new TestKit(system);
         Patterns.pipe(transformed, system.dispatcher()).to(probe.getRef());
         probe.expectMsgEquals("hello, bob/hello, jon");
